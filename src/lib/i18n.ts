@@ -11,6 +11,14 @@ export function getContentfulLocale(locale: Locale): string {
   return CONTENTFUL_LOCALE_MAP[locale] ?? CONTENTFUL_LOCALE_MAP[DEFAULT_LOCALE];
 }
 
+/** Reverse map: "en-US" → "en", "it-IT" → "it". Falls back to DEFAULT_LOCALE. */
+export function fromContentfulLocale(contentfulLocale: string): Locale {
+  for (const [key, value] of Object.entries(CONTENTFUL_LOCALE_MAP)) {
+    if (value === contentfulLocale) return key as Locale;
+  }
+  return DEFAULT_LOCALE;
+}
+
 export function isValidLocale(value: string): value is Locale {
   return LOCALES.includes(value as Locale);
 }
