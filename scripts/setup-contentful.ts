@@ -595,10 +595,10 @@ async function addItalianContent(
     label: "Costruire con Next.js",
   });
   await updateEntryWithItalian(refs.navHome, {
-    label: "Home",
+    label: "Pagina iniziale",
   });
   await updateEntryWithItalian(refs.navBlog, {
-    label: "Blog",
+    label: "Articoli",
   });
 
   // Hero
