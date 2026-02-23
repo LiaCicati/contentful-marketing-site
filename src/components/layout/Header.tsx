@@ -5,15 +5,24 @@ import Link from "next/link";
 import Image from "next/image";
 import type { ResolvedNavigationItem } from "@/lib/types/contentful";
 import { getAssetUrl } from "@/lib/types/contentful";
+import type { Locale } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
+import LanguageSwitcher from "./LanguageSwitcher";
 import type { Asset } from "contentful";
 
 interface HeaderProps {
   siteName: string;
   logo: Asset | undefined;
   navigation: (ResolvedNavigationItem | undefined)[];
+  locale: Locale;
 }
 
-function DesktopDropdown({ item }: { item: ResolvedNavigationItem }) {
+function prefixHref(url: string, locale: Locale): string {
+  if (url.startsWith("http") || url.startsWith("#")) return url;
+  return `/${locale}${url.startsWith("/") ? url : `/${url}`}`;
+}
+
+function DesktopDropdown({ item, locale }: { item: ResolvedNavigationItem; locale: Locale }) {
   const [open, setOpen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const children = (item.fields.children ?? []).filter(Boolean) as ResolvedNavigationItem[];
@@ -36,7 +45,7 @@ function DesktopDropdown({ item }: { item: ResolvedNavigationItem }) {
   if (children.length === 0) {
     return (
       <Link
-        href={item.fields.url}
+        href={prefixHref(item.fields.url, locale)}
         className="px-3 py-2 text-sm font-medium text-gray-700 transition hover:text-primary"
         target={item.fields.openInNewTab ? "_blank" : undefined}
         rel={item.fields.openInNewTab ? "noopener noreferrer" : undefined}
@@ -55,7 +64,7 @@ function DesktopDropdown({ item }: { item: ResolvedNavigationItem }) {
         aria-expanded={open}
         aria-haspopup="true"
       >
-        <Link href={item.fields.url}>{item.fields.label}</Link>
+        <Link href={prefixHref(item.fields.url, locale)}>{item.fields.label}</Link>
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
@@ -65,7 +74,7 @@ function DesktopDropdown({ item }: { item: ResolvedNavigationItem }) {
           {children.map((child) => (
             <Link
               key={child.sys.id}
-              href={child.fields.url}
+              href={prefixHref(child.fields.url, locale)}
               className="block px-4 py-2 text-sm text-gray-700 transition hover:bg-surface-dim hover:text-primary"
               target={child.fields.openInNewTab ? "_blank" : undefined}
               rel={child.fields.openInNewTab ? "noopener noreferrer" : undefined}
@@ -79,14 +88,14 @@ function DesktopDropdown({ item }: { item: ResolvedNavigationItem }) {
   );
 }
 
-function MobileNavItem({ item, onClose }: { item: ResolvedNavigationItem; onClose: () => void }) {
+function MobileNavItem({ item, locale, onClose }: { item: ResolvedNavigationItem; locale: Locale; onClose: () => void }) {
   const [expanded, setExpanded] = useState(false);
   const children = (item.fields.children ?? []).filter(Boolean) as ResolvedNavigationItem[];
 
   if (children.length === 0) {
     return (
       <Link
-        href={item.fields.url}
+        href={prefixHref(item.fields.url, locale)}
         className="block px-4 py-3 text-gray-700 transition hover:bg-surface-dim"
         onClick={onClose}
       >
@@ -103,7 +112,7 @@ function MobileNavItem({ item, onClose }: { item: ResolvedNavigationItem; onClos
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
       >
-        <Link href={item.fields.url} onClick={onClose}>
+        <Link href={prefixHref(item.fields.url, locale)} onClick={onClose}>
           {item.fields.label}
         </Link>
         <svg
@@ -124,7 +133,7 @@ function MobileNavItem({ item, onClose }: { item: ResolvedNavigationItem; onClos
         {children.map((child) => (
           <Link
             key={child.sys.id}
-            href={child.fields.url}
+            href={prefixHref(child.fields.url, locale)}
             className="block py-2 pl-8 pr-4 text-sm text-gray-600 transition hover:bg-surface-dim hover:text-primary"
             onClick={onClose}
           >
@@ -136,7 +145,7 @@ function MobileNavItem({ item, onClose }: { item: ResolvedNavigationItem; onClos
   );
 }
 
-export default function Header({ siteName, logo, navigation }: HeaderProps) {
+export default function Header({ siteName, logo, navigation, locale }: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const logoUrl = getAssetUrl(logo);
   const items = navigation.filter(Boolean) as ResolvedNavigationItem[];
@@ -144,36 +153,40 @@ export default function Header({ siteName, logo, navigation }: HeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-white/95 backdrop-blur">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href={`/${locale}`} className="flex items-center gap-2">
           {logoUrl && (
             <Image src={`${logoUrl}?w=40&h=40&fm=webp`} alt="" width={40} height={40} className="rounded" />
           )}
           <span className="text-lg font-bold text-gray-900">{siteName}</span>
         </Link>
 
-        {/* Desktop nav */}
-        <div className="hidden items-center gap-1 md:flex" role="navigation" aria-label="Main navigation">
-          {items.map((item) => (
-            <DesktopDropdown key={item.sys.id} item={item} />
-          ))}
-        </div>
+        <div className="flex items-center gap-3">
+          {/* Desktop nav */}
+          <div className="hidden items-center gap-1 md:flex" role="navigation" aria-label="Main navigation">
+            {items.map((item) => (
+              <DesktopDropdown key={item.sys.id} item={item} locale={locale} />
+            ))}
+          </div>
 
-        {/* Mobile hamburger */}
-        <button
-          type="button"
-          className="rounded-lg p-2 text-gray-700 hover:bg-gray-100 md:hidden"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
-          aria-expanded={mobileOpen}
-        >
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            {mobileOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
-        </button>
+          <LanguageSwitcher currentLocale={locale} />
+
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            className="rounded-lg p-2 text-gray-700 hover:bg-gray-100 md:hidden"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? t(locale, "header.closeMenu") : t(locale, "header.openMenu")}
+            aria-expanded={mobileOpen}
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              {mobileOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
+        </div>
       </nav>
 
       {/* Mobile menu */}
@@ -184,7 +197,7 @@ export default function Header({ siteName, logo, navigation }: HeaderProps) {
       >
         <div className="bg-white py-2">
           {items.map((item) => (
-            <MobileNavItem key={item.sys.id} item={item} onClose={() => setMobileOpen(false)} />
+            <MobileNavItem key={item.sys.id} item={item} locale={locale} onClose={() => setMobileOpen(false)} />
           ))}
         </div>
       </div>

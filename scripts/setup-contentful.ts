@@ -47,7 +47,6 @@ async function findEntry(env: Environment, contentTypeId: string, field: string,
 }
 
 async function uploadAsset(env: Environment, title: string, imageUrl: string, id?: string): Promise<Entry> {
-  // Check if asset already exists by id
   if (id) {
     try {
       const existing = await env.getAsset(id);
@@ -82,7 +81,6 @@ async function uploadAsset(env: Environment, title: string, imageUrl: string, id
 
   const processed = await asset.processForAllLocales();
 
-  // Wait for processing to complete
   let attempts = 0;
   while (attempts < 30) {
     await new Promise((r) => setTimeout(r, 2000));
@@ -104,17 +102,38 @@ function makeLink(id: string, linkType: "Entry" | "Asset" = "Entry") {
   };
 }
 
+// ─── Locale Setup ──────────────────────────────────────────────
+
+async function ensureItalianLocale(env: Environment) {
+  console.log("\n🌍 Ensuring Italian locale (it-IT) is enabled...\n");
+
+  const locales = await env.getLocales();
+  const hasItalian = locales.items.some((l) => l.code === "it-IT");
+
+  if (hasItalian) {
+    console.log("  Locale it-IT already exists.");
+    return;
+  }
+
+  await env.createLocale({
+    name: "Italian",
+    code: "it-IT",
+    fallbackCode: "en-US",
+    optional: true,
+  });
+  console.log("  Locale it-IT created with fallback to en-US.");
+}
+
 // ─── Content Type Definitions ──────────────────────────────────
 
 async function createAllContentTypes(env: Environment) {
   console.log("\n📋 Creating content types...\n");
 
-  // 1. NavigationItem (create first since it self-references)
   await getOrCreateContentType(env, "navigationItem", {
     name: "Navigation Item",
     displayField: "label",
     fields: [
-      { id: "label", name: "Label", type: "Symbol", required: true },
+      { id: "label", name: "Label", type: "Symbol", required: true, localized: true },
       { id: "url", name: "URL", type: "Symbol", required: true },
       { id: "openInNewTab", name: "Open in New Tab", type: "Boolean", required: false },
       {
@@ -131,15 +150,14 @@ async function createAllContentTypes(env: Environment) {
     ],
   });
 
-  // 2. Hero
   await getOrCreateContentType(env, "hero", {
     name: "Hero",
     displayField: "internalName",
     fields: [
       { id: "internalName", name: "Internal Name", type: "Symbol", required: true },
-      { id: "headline", name: "Headline", type: "Symbol", required: true },
-      { id: "subheadline", name: "Subheadline", type: "Symbol", required: false },
-      { id: "ctaLabel", name: "CTA Label", type: "Symbol", required: false },
+      { id: "headline", name: "Headline", type: "Symbol", required: true, localized: true },
+      { id: "subheadline", name: "Subheadline", type: "Symbol", required: false, localized: true },
+      { id: "ctaLabel", name: "CTA Label", type: "Symbol", required: false, localized: true },
       { id: "ctaUrl", name: "CTA URL", type: "Symbol", required: false },
       {
         id: "backgroundImage",
@@ -158,13 +176,12 @@ async function createAllContentTypes(env: Environment) {
     ],
   });
 
-  // 3. TextWithImage
   await getOrCreateContentType(env, "textWithImage", {
     name: "Text With Image",
     displayField: "internalName",
     fields: [
       { id: "internalName", name: "Internal Name", type: "Symbol", required: true },
-      { id: "content", name: "Content", type: "RichText", required: true },
+      { id: "content", name: "Content", type: "RichText", required: true, localized: true },
       {
         id: "image",
         name: "Image",
@@ -182,35 +199,32 @@ async function createAllContentTypes(env: Environment) {
     ],
   });
 
-  // 4. CallToAction
   await getOrCreateContentType(env, "callToAction", {
     name: "Call To Action",
     displayField: "internalName",
     fields: [
       { id: "internalName", name: "Internal Name", type: "Symbol", required: true },
-      { id: "headline", name: "Headline", type: "Symbol", required: true },
-      { id: "body", name: "Body", type: "RichText", required: false },
-      { id: "buttonLabel", name: "Button Label", type: "Symbol", required: false },
+      { id: "headline", name: "Headline", type: "Symbol", required: true, localized: true },
+      { id: "body", name: "Body", type: "RichText", required: false, localized: true },
+      { id: "buttonLabel", name: "Button Label", type: "Symbol", required: false, localized: true },
       { id: "buttonUrl", name: "Button URL", type: "Symbol", required: false },
     ],
   });
 
-  // 5. RichTextBlock
   await getOrCreateContentType(env, "richTextBlock", {
     name: "Rich Text Block",
     displayField: "internalName",
     fields: [
       { id: "internalName", name: "Internal Name", type: "Symbol", required: true },
-      { id: "body", name: "Body", type: "RichText", required: true },
+      { id: "body", name: "Body", type: "RichText", required: true, localized: true },
     ],
   });
 
-  // 6. Page
   await getOrCreateContentType(env, "page", {
     name: "Page",
     displayField: "title",
     fields: [
-      { id: "title", name: "Title", type: "Symbol", required: true },
+      { id: "title", name: "Title", type: "Symbol", required: true, localized: true },
       {
         id: "slug",
         name: "Slug",
@@ -218,7 +232,7 @@ async function createAllContentTypes(env: Environment) {
         required: true,
         validations: [{ unique: true }],
       },
-      { id: "metaDescription", name: "Meta Description", type: "Symbol", required: false },
+      { id: "metaDescription", name: "Meta Description", type: "Symbol", required: false, localized: true },
       {
         id: "body",
         name: "Body",
@@ -235,12 +249,11 @@ async function createAllContentTypes(env: Environment) {
     ],
   });
 
-  // 7. BlogPost
   await getOrCreateContentType(env, "blogPost", {
     name: "Blog Post",
     displayField: "title",
     fields: [
-      { id: "title", name: "Title", type: "Symbol", required: true },
+      { id: "title", name: "Title", type: "Symbol", required: true, localized: true },
       {
         id: "slug",
         name: "Slug",
@@ -248,8 +261,8 @@ async function createAllContentTypes(env: Environment) {
         required: true,
         validations: [{ unique: true }],
       },
-      { id: "excerpt", name: "Excerpt", type: "Symbol", required: false },
-      { id: "content", name: "Content", type: "RichText", required: false },
+      { id: "excerpt", name: "Excerpt", type: "Symbol", required: false, localized: true },
+      { id: "content", name: "Content", type: "RichText", required: false, localized: true },
       {
         id: "featuredImage",
         name: "Featured Image",
@@ -262,12 +275,11 @@ async function createAllContentTypes(env: Environment) {
     ],
   });
 
-  // 8. SiteConfig
   await getOrCreateContentType(env, "siteConfig", {
     name: "Site Config",
     displayField: "siteName",
     fields: [
-      { id: "siteName", name: "Site Name", type: "Symbol", required: true },
+      { id: "siteName", name: "Site Name", type: "Symbol", required: true, localized: true },
       {
         id: "logo",
         name: "Logo",
@@ -286,7 +298,7 @@ async function createAllContentTypes(env: Environment) {
           validations: [{ linkContentType: ["navigationItem"] }],
         },
       },
-      { id: "copyrightText", name: "Copyright Text", type: "Symbol", required: false },
+      { id: "copyrightText", name: "Copyright Text", type: "Symbol", required: false, localized: true },
       { id: "socialLinks", name: "Social Links", type: "Object", required: false },
     ],
   });
@@ -381,7 +393,6 @@ async function createDemoContent(env: Environment) {
 
   console.log("  Creating block entries...");
 
-  // Hero
   let heroEntry = await findEntry(env, "hero", "internalName", "Homepage Hero");
   if (!heroEntry) {
     heroEntry = await env.createEntry("hero", {
@@ -398,7 +409,6 @@ async function createDemoContent(env: Environment) {
     await heroEntry.publish();
   }
 
-  // TextWithImage
   let textWithImageEntry = await findEntry(env, "textWithImage", "internalName", "Homepage About");
   if (!textWithImageEntry) {
     textWithImageEntry = await env.createEntry("textWithImage", {
@@ -418,7 +428,6 @@ async function createDemoContent(env: Environment) {
     await textWithImageEntry.publish();
   }
 
-  // CallToAction (standalone — reusable across pages)
   let ctaEntry = await findEntry(env, "callToAction", "internalName", "Homepage Blog CTA");
   if (!ctaEntry) {
     ctaEntry = await env.createEntry("callToAction", {
@@ -515,8 +524,9 @@ async function createDemoContent(env: Environment) {
   console.log("  Creating site config...");
 
   const existing = await env.getEntries({ content_type: "siteConfig", limit: 1 });
+  let siteConfigEntry: Entry;
   if (existing.items.length === 0) {
-    const siteConfig = await env.createEntry("siteConfig", {
+    siteConfigEntry = await env.createEntry("siteConfig", {
       fields: {
         siteName: { "en-US": "Acme Marketing" },
         logo: { "en-US": makeLink(logoAsset.sys.id, "Asset") },
@@ -533,12 +543,132 @@ async function createDemoContent(env: Environment) {
         },
       },
     });
-    await siteConfig.publish();
+    await siteConfigEntry.publish();
   } else {
+    siteConfigEntry = existing.items[0];
     console.log("  Site config already exists.");
   }
 
   console.log("\n✅ All demo content created and published.\n");
+
+  // Return references for Italian content pass
+  return {
+    heroEntry,
+    textWithImageEntry,
+    ctaEntry,
+    homePage,
+    blogPost1,
+    blogPost2,
+    siteConfigEntry,
+    blogChildContentful,
+    blogChildNextjs,
+    navHome,
+    navBlog,
+  };
+}
+
+// ─── Italian Content ───────────────────────────────────────────
+
+async function addItalianContent(
+  env: Environment,
+  refs: Awaited<ReturnType<typeof createDemoContent>>
+) {
+  console.log("🇮🇹 Adding Italian translations...\n");
+
+  async function updateEntryWithItalian(entry: Entry, italianFields: Record<string, unknown>) {
+    // Re-fetch to get latest version
+    const fresh = await env.getEntry(entry.sys.id);
+    for (const [field, value] of Object.entries(italianFields)) {
+      if (!fresh.fields[field]) fresh.fields[field] = {};
+      (fresh.fields[field] as Record<string, unknown>)["it-IT"] = value;
+    }
+    const updated = await fresh.update();
+    await updated.publish();
+  }
+
+  // Navigation items
+  console.log("  Translating navigation items...");
+  await updateEntryWithItalian(refs.blogChildContentful, {
+    label: "Iniziare con Contentful",
+  });
+  await updateEntryWithItalian(refs.blogChildNextjs, {
+    label: "Costruire con Next.js",
+  });
+  await updateEntryWithItalian(refs.navHome, {
+    label: "Home",
+  });
+  await updateEntryWithItalian(refs.navBlog, {
+    label: "Blog",
+  });
+
+  // Hero
+  console.log("  Translating hero...");
+  await updateEntryWithItalian(refs.heroEntry, {
+    headline: "Crea siti web moderni con Contentful e Next.js",
+    subheadline: "Una piattaforma di contenuti componibile che permette al tuo team di creare, gestire e distribuire esperienze digitali su larga scala.",
+    ctaLabel: "Leggi il nostro Blog",
+  });
+
+  // TextWithImage
+  console.log("  Translating text with image...");
+  await updateEntryWithItalian(refs.textWithImageEntry, {
+    content: richTextParagraphs(
+      "Benvenuto nel nostro sito di marketing demo costruito con Next.js e Contentful. Questo progetto mostra come un CMS headless possa alimentare un sito web moderno e ad alte prestazioni.",
+      "Ogni sezione che vedi in questa pagina \u00e8 un blocco di contenuto riutilizzabile gestito in Contentful. Gli editor di contenuti possono creare, riordinare e riutilizzare i blocchi su pi\u00f9 pagine senza toccare il codice.",
+      "Questa architettura permette ai team di iterare rapidamente sui contenuti mentre gli sviluppatori mantengono un codice pulito e tipizzato."
+    ),
+  });
+
+  // CallToAction
+  console.log("  Translating call to action...");
+  await updateEntryWithItalian(refs.ctaEntry, {
+    headline: "Pronto a saperne di pi\u00f9?",
+    body: richTextParagraphs(
+      "Esplora il nostro blog per tutorial su come iniziare con Contentful e costruire siti ad alte prestazioni con Next.js."
+    ),
+    buttonLabel: "Visita il Blog",
+  });
+
+  // Home page
+  console.log("  Translating home page...");
+  await updateEntryWithItalian(refs.homePage, {
+    title: "Home",
+    metaDescription: "Un sito demo di marketing con Next.js alimentato dal CMS Contentful. Esplora l'architettura dei contenuti componibili.",
+  });
+
+  // Blog Post 1
+  console.log("  Translating blog posts...");
+  await updateEntryWithItalian(refs.blogPost1, {
+    title: "Iniziare con Contentful",
+    excerpt: "Scopri come configurare uno spazio Contentful, definire modelli di contenuto e iniziare a gestire i tuoi contenuti come un professionista.",
+    content: richTextParagraphs(
+      "Contentful \u00e8 un sistema di gestione dei contenuti headless che ti offre la flessibilit\u00e0 di gestire i contenuti separatamente da come vengono visualizzati. A differenza delle piattaforme CMS tradizionali, Contentful archivia i contenuti come dati strutturati accessibili tramite API, rendendolo perfetto per lo sviluppo web moderno.",
+      "Per iniziare, crea un account Contentful gratuito e configura il tuo primo spazio. Uno spazio \u00e8 il tuo repository di contenuti dove definisci i tipi di contenuto, crei le voci e gestisci le risorse. Il piano gratuito \u00e8 sufficientemente generoso per la maggior parte dei progetti demo e piccoli progetti di produzione, con fino a 25 tipi di contenuto e 1 milione di chiamate API al mese.",
+      "La modellazione dei contenuti \u00e8 il cuore di Contentful. Definisci i tipi di contenuto con campi specifici: testo, rich text, media, riferimenti e altro. L'intuizione chiave \u00e8 che le voci referenziate sono riutilizzabili: un singolo blocco Hero pu\u00f2 apparire su pi\u00f9 pagine senza duplicazione. Questo approccio componibile \u00e8 ci\u00f2 che rende Contentful potente.",
+      "Una volta che il modello di contenuto \u00e8 pronto, puoi usare la Content Delivery API per recuperare i contenuti pubblicati o la Content Preview API per vedere le modifiche in bozza prima della pubblicazione. Entrambe le API restituiscono JSON che puoi renderizzare in qualsiasi framework frontend."
+    ),
+  });
+
+  // Blog Post 2
+  await updateEntryWithItalian(refs.blogPost2, {
+    title: "Costruire con Next.js",
+    excerpt: "Scopri come l'App Router di Next.js e i Server Components creano il frontend perfetto per i siti alimentati da Contentful.",
+    content: richTextParagraphs(
+      "Next.js \u00e8 il framework frontend ideale per i siti web alimentati da Contentful. Con l'App Router introdotto in Next.js 13 e perfezionato nelle versioni successive, ottieni i Server Components per impostazione predefinita, il che significa che le chiamate API a Contentful avvengono sul server senza alcun overhead JavaScript lato client.",
+      "I Server Components recuperano i dati al momento della richiesta o durante la build, quindi inviano l'HTML in streaming al browser. Combinato con l'Incremental Static Regeneration (ISR), ottieni le prestazioni dei siti statici con la freschezza dei contenuti dinamici. Imposta un periodo di rivalidazione e Next.js aggiorna automaticamente i contenuti in background.",
+      "La funzionalit\u00e0 Draft Mode di Next.js si abbina perfettamente alla Preview API di Contentful. Gli editor di contenuti possono vedere le modifiche non pubblicate nel contesto del sito reale abilitando la modalit\u00e0 bozza tramite un percorso API sicuro. Questo flusso di lavoro colma il divario tra creazione e pubblicazione dei contenuti.",
+      "TypeScript e il SDK di Contentful lavorano insieme per offrirti piena sicurezza dei tipi, dalla risposta API al componente renderizzato. Definisci le interfacce dei tipi di contenuto una volta sola, e il tuo IDE completer\u00e0 automaticamente i nomi dei campi, individuer\u00e0 gli errori di battitura e ti assicurer\u00e0 di gestire correttamente i campi opzionali in tutta l'applicazione."
+    ),
+  });
+
+  // Site Config
+  console.log("  Translating site config...");
+  await updateEntryWithItalian(refs.siteConfigEntry, {
+    siteName: "Acme Marketing",
+    copyrightText: "\u00A9 2025 Acme Marketing. Tutti i diritti riservati.",
+  });
+
+  console.log("\n✅ Italian translations added.\n");
 }
 
 // ─── Main ──────────────────────────────────────────────────────
@@ -556,8 +686,10 @@ async function main() {
   const space = await client.getSpace(SPACE_ID!);
   const env = await space.getEnvironment(ENVIRONMENT_ID);
 
+  await ensureItalianLocale(env);
   await createAllContentTypes(env);
-  await createDemoContent(env);
+  const refs = await createDemoContent(env);
+  await addItalianContent(env, refs);
 
   console.log("🎉 Setup complete! You can now run: npm run dev");
 }

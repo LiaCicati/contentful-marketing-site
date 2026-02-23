@@ -3,26 +3,40 @@ import Image from "next/image";
 import Link from "next/link";
 import { getBlogPosts } from "@/lib/contentful";
 import { getAssetUrl } from "@/lib/types/contentful";
+import { isValidLocale, getDateLocale, t, type Locale } from "@/lib/i18n";
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: "Blog",
-  description: "Read our latest articles and insights.",
-};
+interface BlogPageProps {
+  params: Promise<{ locale: string }>;
+}
 
-export default async function BlogListingPage() {
+export async function generateMetadata({ params }: BlogPageProps): Promise<Metadata> {
+  const { locale: localeParam } = await params;
+  if (!isValidLocale(localeParam)) return {};
+  return {
+    title: t(localeParam as Locale, "blog.title"),
+    description: t(localeParam as Locale, "blog.subtitle"),
+  };
+}
+
+export default async function BlogListingPage({ params }: BlogPageProps) {
+  const { locale: localeParam } = await params;
+  if (!isValidLocale(localeParam)) notFound();
+  const locale = localeParam as Locale;
+
   const draft = await draftMode();
-  const posts = await getBlogPosts(draft.isEnabled);
+  const posts = await getBlogPosts(draft.isEnabled, locale);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-16">
-      <h1 className="mb-2 text-4xl font-bold">Blog</h1>
-      <p className="mb-12 text-lg text-text-muted">Latest articles and insights</p>
+      <h1 className="mb-2 text-4xl font-bold">{t(locale, "blog.title")}</h1>
+      <p className="mb-12 text-lg text-text-muted">{t(locale, "blog.subtitle")}</p>
 
       {posts.length === 0 ? (
-        <p className="text-text-muted">No posts yet. Check back soon!</p>
+        <p className="text-text-muted">{t(locale, "blog.empty")}</p>
       ) : (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => {
@@ -30,7 +44,7 @@ export default async function BlogListingPage() {
             return (
               <Link
                 key={post.sys.id}
-                href={`/blog/${post.fields.slug}`}
+                href={`/${locale}/blog/${post.fields.slug}`}
                 className="group overflow-hidden rounded-lg border border-border transition hover:shadow-lg"
               >
                 {imageUrl && (
@@ -46,7 +60,7 @@ export default async function BlogListingPage() {
                 <div className="p-5">
                   {post.fields.publishedDate && (
                     <time className="mb-2 block text-sm text-text-muted">
-                      {new Date(post.fields.publishedDate).toLocaleDateString("en-US", {
+                      {new Date(post.fields.publishedDate).toLocaleDateString(getDateLocale(locale), {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
@@ -61,7 +75,7 @@ export default async function BlogListingPage() {
                   )}
                   {post.fields.author && (
                     <p className="mt-3 text-xs font-medium text-text-muted">
-                      By {post.fields.author}
+                      {t(locale, "blog.by")} {post.fields.author}
                     </p>
                   )}
                 </div>
