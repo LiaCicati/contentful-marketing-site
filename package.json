@@ -10,6 +10,7 @@
     "setup": "tsx scripts/setup-contentful.ts"
   },
   "dependencies": {
+    "@contentful/live-preview": "^4.9.6",
     "@contentful/rich-text-react-renderer": "^16.1.6",
     "@contentful/rich-text-types": "^17.2.5",
     "contentful": "^11.10.4",

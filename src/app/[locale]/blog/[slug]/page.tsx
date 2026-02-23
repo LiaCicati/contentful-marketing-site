@@ -61,10 +61,20 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         {t(locale, "blog.back")}
       </Link>
 
-      <h1 className="mb-4 text-4xl font-bold md:text-5xl">{post.fields.title}</h1>
+      <h1
+        className="mb-4 text-4xl font-bold md:text-5xl"
+        data-contentful-entry-id={post.sys.id}
+        data-contentful-field-id="title"
+      >
+        {post.fields.title}
+      </h1>
 
       <div className="mb-8 flex items-center gap-4 text-sm text-text-muted">
-        {post.fields.author && <span>{t(locale, "blog.by")} {post.fields.author}</span>}
+        {post.fields.author && (
+          <span data-contentful-entry-id={post.sys.id} data-contentful-field-id="author">
+            {t(locale, "blog.by")} {post.fields.author}
+          </span>
+        )}
         {post.fields.publishedDate && (
           <>
             <span aria-hidden="true">&middot;</span>
@@ -93,7 +103,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       )}
 
       {post.fields.content && (
-        <div className="prose max-w-none">
+        <div
+          className="prose max-w-none"
+          data-contentful-entry-id={post.sys.id}
+          data-contentful-field-id="content"
+        >
           {documentToReactComponents(post.fields.content, getRichTextOptions(locale))}
         </div>
       )}

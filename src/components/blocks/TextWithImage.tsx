@@ -15,6 +15,7 @@ export default function TextWithImage({ entry, locale }: TextWithImageProps) {
   const imageUrl = getAssetUrl(image);
   const dims = getAssetDimensions(image);
   const isImageLeft = layout === "image-left";
+  const entryId = entry.sys.id;
 
   return (
     <section className="py-16">
@@ -25,7 +26,11 @@ export default function TextWithImage({ entry, locale }: TextWithImageProps) {
           }`}
         >
           {imageUrl && (
-            <div className="w-full md:w-1/2">
+            <div
+              className="w-full md:w-1/2"
+              data-contentful-entry-id={entryId}
+              data-contentful-field-id="image"
+            >
               <Image
                 src={`${imageUrl}?w=700&fm=webp`}
                 alt={image?.fields?.title as string ?? ""}
@@ -35,7 +40,11 @@ export default function TextWithImage({ entry, locale }: TextWithImageProps) {
               />
             </div>
           )}
-          <div className="w-full md:w-1/2">
+          <div
+            className="w-full md:w-1/2"
+            data-contentful-entry-id={entryId}
+            data-contentful-field-id="content"
+          >
             <div className="prose max-w-none">
               {documentToReactComponents(content, getRichTextOptions(locale))}
             </div>

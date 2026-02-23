@@ -14,7 +14,11 @@ export default function RichTextBlock({ entry, locale }: RichTextBlockProps) {
   return (
     <section className="py-16">
       <div className="mx-auto max-w-3xl px-6">
-        <div className="prose max-w-none">
+        <div
+          className="prose max-w-none"
+          data-contentful-entry-id={entry.sys.id}
+          data-contentful-field-id="body"
+        >
           {documentToReactComponents(body, getRichTextOptions(locale))}
         </div>
       </div>

@@ -18,6 +18,7 @@ export default function Hero({ entry, locale }: HeroProps) {
   const { headline, subheadline, ctaLabel, ctaUrl, backgroundImage, variant } = entry.fields;
   const bgUrl = getAssetUrl(backgroundImage);
   const isFullWidth = variant === "full-width";
+  const entryId = entry.sys.id;
 
   return (
     <section
@@ -40,16 +41,26 @@ export default function Hero({ entry, locale }: HeroProps) {
           className={`mb-4 font-bold tracking-tight ${
             isFullWidth ? "text-4xl md:text-6xl" : "text-3xl md:text-4xl"
           }`}
+          data-contentful-entry-id={entryId}
+          data-contentful-field-id="headline"
         >
           {headline}
         </h1>
         {subheadline && (
-          <p className="mx-auto mb-8 max-w-xl text-lg text-white/90 md:text-xl">{subheadline}</p>
+          <p
+            className="mx-auto mb-8 max-w-xl text-lg text-white/90 md:text-xl"
+            data-contentful-entry-id={entryId}
+            data-contentful-field-id="subheadline"
+          >
+            {subheadline}
+          </p>
         )}
         {ctaLabel && ctaUrl && (
           <Link
             href={prefixHref(ctaUrl, locale)}
             className="inline-block rounded-lg bg-primary px-8 py-3 font-semibold text-white transition hover:bg-primary-dark"
+            data-contentful-entry-id={entryId}
+            data-contentful-field-id="ctaLabel"
           >
             {ctaLabel}
           </Link>
