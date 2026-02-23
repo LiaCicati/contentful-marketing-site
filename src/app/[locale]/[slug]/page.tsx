@@ -47,5 +47,5 @@ export default async function DynamicPage({ params }: PageProps) {
 
   const blocks = (page.fields.body ?? []) as (ResolvedBlock | undefined)[];
 
-  return <BlockRenderer blocks={blocks} />;
+  return <BlockRenderer blocks={blocks} locale={locale} />;
 }

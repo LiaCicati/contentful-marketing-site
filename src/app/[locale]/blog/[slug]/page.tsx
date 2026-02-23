@@ -6,7 +6,7 @@ import { documentToReactComponents } from "@contentful/rich-text-react-renderer"
 import { getBlogPost, getBlogPosts } from "@/lib/contentful";
 import { getAssetUrl, getAssetDimensions } from "@/lib/types/contentful";
 import { LOCALES, isValidLocale, getDateLocale, t, type Locale } from "@/lib/i18n";
-import { richTextOptions } from "@/lib/richTextOptions";
+import { getRichTextOptions } from "@/lib/richTextOptions";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
@@ -94,7 +94,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       {post.fields.content && (
         <div className="prose max-w-none">
-          {documentToReactComponents(post.fields.content, richTextOptions)}
+          {documentToReactComponents(post.fields.content, getRichTextOptions(locale))}
         </div>
       )}
     </article>

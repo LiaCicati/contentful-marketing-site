@@ -2,12 +2,19 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ResolvedHero } from "@/lib/types/contentful";
 import { getAssetUrl } from "@/lib/types/contentful";
+import type { Locale } from "@/lib/i18n";
+
+function prefixHref(url: string, locale: Locale): string {
+  if (url.startsWith("http") || url.startsWith("#")) return url;
+  return `/${locale}${url.startsWith("/") ? url : `/${url}`}`;
+}
 
 interface HeroProps {
   entry: ResolvedHero;
+  locale: Locale;
 }
 
-export default function Hero({ entry }: HeroProps) {
+export default function Hero({ entry, locale }: HeroProps) {
   const { headline, subheadline, ctaLabel, ctaUrl, backgroundImage, variant } = entry.fields;
   const bgUrl = getAssetUrl(backgroundImage);
   const isFullWidth = variant === "full-width";
@@ -41,7 +48,7 @@ export default function Hero({ entry }: HeroProps) {
         )}
         {ctaLabel && ctaUrl && (
           <Link
-            href={ctaUrl}
+            href={prefixHref(ctaUrl, locale)}
             className="inline-block rounded-lg bg-primary px-8 py-3 font-semibold text-white transition hover:bg-primary-dark"
           >
             {ctaLabel}

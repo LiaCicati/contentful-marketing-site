@@ -2,13 +2,15 @@ import Image from "next/image";
 import { documentToReactComponents } from "@contentful/rich-text-react-renderer";
 import type { ResolvedTextWithImage } from "@/lib/types/contentful";
 import { getAssetUrl, getAssetDimensions } from "@/lib/types/contentful";
-import { richTextOptions } from "@/lib/richTextOptions";
+import { getRichTextOptions } from "@/lib/richTextOptions";
+import type { Locale } from "@/lib/i18n";
 
 interface TextWithImageProps {
   entry: ResolvedTextWithImage;
+  locale: Locale;
 }
 
-export default function TextWithImage({ entry }: TextWithImageProps) {
+export default function TextWithImage({ entry, locale }: TextWithImageProps) {
   const { content, image, layout } = entry.fields;
   const imageUrl = getAssetUrl(image);
   const dims = getAssetDimensions(image);
@@ -35,7 +37,7 @@ export default function TextWithImage({ entry }: TextWithImageProps) {
           )}
           <div className="w-full md:w-1/2">
             <div className="prose max-w-none">
-              {documentToReactComponents(content, richTextOptions)}
+              {documentToReactComponents(content, getRichTextOptions(locale))}
             </div>
           </div>
         </div>

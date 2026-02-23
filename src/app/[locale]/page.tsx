@@ -34,5 +34,5 @@ export default async function HomePage({ params }: HomePageProps) {
 
   const blocks = (page.fields.body ?? []) as (ResolvedBlock | undefined)[];
 
-  return <BlockRenderer blocks={blocks} />;
+  return <BlockRenderer blocks={blocks} locale={locale} />;
 }
