@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPage } from "@/lib/contentful";
 import { isValidLocale, type Locale } from "@/lib/i18n";
 import BlockRenderer from "@/components/BlockRenderer";
+import LiveBlockRenderer from "@/components/LiveBlockRenderer";
 import type { Metadata } from "next";
 import type { ResolvedBlock } from "@/lib/types/contentful";
 
@@ -34,5 +35,7 @@ export default async function HomePage({ params }: HomePageProps) {
 
   const blocks = (page.fields.body ?? []) as (ResolvedBlock | undefined)[];
 
-  return <BlockRenderer blocks={blocks} locale={locale} />;
+  return draft.isEnabled
+    ? <LiveBlockRenderer blocks={blocks} locale={locale} />
+    : <BlockRenderer blocks={blocks} locale={locale} />;
 }

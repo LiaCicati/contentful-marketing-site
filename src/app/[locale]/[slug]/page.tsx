@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getPage, getAllPages } from "@/lib/contentful";
 import { LOCALES, isValidLocale, type Locale } from "@/lib/i18n";
 import BlockRenderer from "@/components/BlockRenderer";
+import LiveBlockRenderer from "@/components/LiveBlockRenderer";
 import type { Metadata } from "next";
 import type { ResolvedBlock } from "@/lib/types/contentful";
 
@@ -47,5 +48,7 @@ export default async function DynamicPage({ params }: PageProps) {
 
   const blocks = (page.fields.body ?? []) as (ResolvedBlock | undefined)[];
 
-  return <BlockRenderer blocks={blocks} locale={locale} />;
+  return draft.isEnabled
+    ? <LiveBlockRenderer blocks={blocks} locale={locale} />
+    : <BlockRenderer blocks={blocks} locale={locale} />;
 }

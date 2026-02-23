@@ -7,6 +7,7 @@ import { getBlogPost, getBlogPosts } from "@/lib/contentful";
 import { getAssetUrl, getAssetDimensions } from "@/lib/types/contentful";
 import { LOCALES, isValidLocale, getDateLocale, t, type Locale } from "@/lib/i18n";
 import { getRichTextOptions } from "@/lib/richTextOptions";
+import LiveBlogPost from "@/components/LiveBlogPost";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
@@ -45,6 +46,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const draft = await draftMode();
   const post = await getBlogPost(slug, draft.isEnabled, locale);
   if (!post) notFound();
+
+  if (draft.isEnabled) {
+    return <LiveBlogPost post={post} locale={locale} />;
+  }
 
   const imageUrl = getAssetUrl(post.fields.featuredImage);
   const dims = getAssetDimensions(post.fields.featuredImage);
